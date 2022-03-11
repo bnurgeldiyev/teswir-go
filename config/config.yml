@@ -1,0 +1,13 @@
+app:
+  name: 'teswir-go'
+  version: '0.0.1'
+
+http:
+  port: '8081'
+
+logger:
+  log_level: 'debug'
+  rollbar_env: 'teswir-go'
+
+postgres:
+  pool_max: 20
