@@ -16,6 +16,11 @@ const (
 	UserRoleClient UserRole = "CLIENT"
 )
 
+type UserAuth struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type User struct {
 	ID        uuid.UUID `json:"id"`
 	Username  string    `json:"username"`

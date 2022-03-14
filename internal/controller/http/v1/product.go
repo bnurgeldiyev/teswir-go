@@ -10,12 +10,12 @@ import (
 )
 
 type productRoutes struct {
-	pUseCase usecase.Product
+	pUseCase usecase.UseCase
 	log      logger.Interface
 }
 
-func newProductRoutes(handler *mux.Router, p usecase.Product, l logger.Interface) {
-	r := productRoutes{p, l}
+func newProductRoutes(handler *mux.Router, uCase usecase.UseCase, l logger.Interface) {
+	r := productRoutes{uCase, l}
 
 	handler.HandleFunc("/api/v1/product/add", r.productAdd).Methods("POST")
 }

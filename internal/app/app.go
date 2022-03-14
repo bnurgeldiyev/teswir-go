@@ -11,6 +11,7 @@ import (
 	"teswir-go/internal/usecase"
 	"teswir-go/internal/usecase/repo"
 	"teswir-go/internal/usecase/webapi"
+	"teswir-go/pkg/auth"
 	"teswir-go/pkg/httpserver"
 	"teswir-go/pkg/logger"
 	"teswir-go/pkg/postgres"
@@ -25,19 +26,18 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
-	userUseCase := usecase.NewUserUseCase(
-		repo.NewUserRepo(pg),
-		webapi.NewUserWebAPI(),
-	)
+	authGrpc, err1 := auth.NewGrpcClient(cfg.AUTH.URL, l)
+	if err1 != nil {
+		l.Fatal(fmt.Errorf("app - Run - auth.NewGrpcClient"))
+	}
 
-	productUseCase := usecase.NewProductUseCase(
-		repo.NewProductRepo(pg),
-		webapi.NewProductWebAPI(),
+	userUseCase := usecase.NewUseCase(
+		repo.NewRepo(pg),
+		webapi.NewWebAPI(authGrpc),
 	)
 
 	handler := mux.NewRouter()
-	v1.NewUserRouter(handler, l, userUseCase)
-	v1.NewProductRouter(handler, l, productUseCase)
+	v1.NewRouter(handler, l, userUseCase)
 
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 

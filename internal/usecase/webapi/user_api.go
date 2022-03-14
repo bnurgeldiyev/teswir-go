@@ -5,13 +5,17 @@ import (
 	"teswir-go/internal/entity"
 )
 
-type UserWebAPI struct{}
+func (w *WebAPI) ApiAuth(ctx context.Context, username, password string) (item *entity.UserAuth, err error) {
 
-func NewUserWebAPI() *UserWebAPI {
-	return &UserWebAPI{}
-}
+	auth, err1 := w.auth.Auth(ctx, username, password)
+	if err1 != nil {
+		err = err1
+	}
 
-func (u UserWebAPI) UserAdd(ctx context.Context, r *entity.User) (err error) {
-	//TODO implement me
-	panic("implement me")
+	item = &entity.UserAuth{
+		AccessToken:  auth.AccessToken,
+		RefreshToken: auth.RefreshToken,
+	}
+
+	return
 }

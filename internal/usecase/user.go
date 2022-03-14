@@ -4,48 +4,82 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofrs/uuid"
+	"net/http"
 	"teswir-go/internal/entity"
 	"teswir-go/pkg/logger"
 )
 
-type UserUseCase struct {
-	repo   UserRepo
-	webAPI UserWebAPI
-}
+func (u *useCase) UserAuth(ctx context.Context, log logger.Interface, username, password string) (item *entity.UserAuth, errCode int) {
 
-func NewUserUseCase(r UserRepo, w UserWebAPI) *UserUseCase {
-	return &UserUseCase{
-		repo:   r,
-		webAPI: w,
+	auth, err := u.webAPI.ApiAuth(ctx, username, password)
+	if err != nil {
+		eMsg := "error in u.webApi.Auth()"
+		log.Error(eMsg, err)
+		errCode = http.StatusUnauthorized
+		return
 	}
+
+	item = &entity.UserAuth{
+		AccessToken:  auth.AccessToken,
+		RefreshToken: auth.RefreshToken,
+	}
+
+	return
 }
 
-func (u *UserUseCase) UserAdd(ctx context.Context, r *entity.User, log logger.Interface) (err error) {
+func (u *useCase) UserAdd(ctx context.Context, log logger.Interface, r *entity.User) (errCode int) {
 
 	user, err1 := u.repo.UserGetByUsername(ctx, r.Username)
 	if err1 != nil {
-		
+		eMsg := "error in u.repo.UserGetByUsername"
+		log.Error(eMsg, err1)
+		errCode = http.StatusInternalServerError
+		return
 	}
 
-	if user == nil {
-
+	if user != nil {
+		eMsg := fmt.Sprintf("User with username=<%s> already exists", r.Username)
+		log.Error(eMsg)
+		errCode = http.StatusConflict
+		return
 	}
 
-	err = u.repo.UserAdd(ctx, r)
+	err := u.repo.UserAdd(ctx, r)
 	if err != nil {
-		fmt.Println(err)
+		eMsg := "error in u.repo.UserAdd()"
+		log.Error(eMsg, err)
+		errCode = http.StatusInternalServerError
 		return
 	}
 
 	return
 }
 
-func (u *UserUseCase) UserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error) {
+func (u *useCase) UserGetByID(ctx context.Context, log logger.Interface, id uuid.UUID) (item *entity.User, errCode int) {
 
-	item, err = u.repo.UserGetByID(ctx, id)
+	user, err := u.repo.UserGetByID(ctx, id)
 	if err != nil {
-		//err = v1.ErrInternalServerError
+		eMsg := "error in u.repo.UserGetByID()"
+		log.Error(eMsg, err)
+		errCode = http.StatusInternalServerError
 		return
+	}
+
+	if user == nil {
+		eMsg := fmt.Sprintf("User with id=<%s> not found", id)
+		log.Error(eMsg)
+		errCode = http.StatusNotFound
+		return
+	}
+
+	item = &entity.User{
+		ID:        user.ID,
+		Username:  user.Username,
+		Firstname: user.Firstname,
+		Lastname:  user.Lastname,
+		UserRole:  user.UserRole,
+		CreateTS:  user.CreateTS,
+		UpdateTS:  user.UpdateTS,
 	}
 
 	return

@@ -7,33 +7,32 @@ import (
 	"teswir-go/pkg/logger"
 )
 
+type useCase struct {
+	repo   Repo
+	webAPI WebAPI
+}
+
+func NewUseCase(r Repo, w WebAPI) *useCase {
+	return &useCase{
+		repo:   r,
+		webAPI: w,
+	}
+}
+
 type (
-	User interface {
-		UserAdd(ctx context.Context, r *entity.User, log logger.Interface) (err error)
-		UserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error)
+	UseCase interface {
+		UserAdd(ctx context.Context, log logger.Interface, r *entity.User) (errCode int)
+		UserGetByID(ctx context.Context, log logger.Interface, id uuid.UUID) (item *entity.User, errCode int)
+		UserAuth(ctx context.Context, log logger.Interface, username, password string) (item *entity.UserAuth, errCode int)
 	}
 
-	UserRepo interface {
+	Repo interface {
 		UserAdd(ctx context.Context, r *entity.User) (err error)
 		UserGetByUsername(ctx context.Context, username string) (item *entity.User, err error)
 		UserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error)
 	}
 
-	UserWebAPI interface {
-		UserAdd(ctx context.Context, r *entity.User) (err error)
-	}
-)
-
-type (
-	Product interface {
-		ProductAdd(ctx context.Context, r *entity.Product) (err error)
-	}
-
-	ProductRepo interface {
-		ProductAdd(ctx context.Context, r *entity.Product) (err error)
-	}
-
-	ProductWebAPI interface {
-		ProductAdd(ctx context.Context, r *entity.Product) (err error)
+	WebAPI interface {
+		ApiAuth(ctx context.Context, username, password string) (item *entity.UserAuth, err error)
 	}
 )

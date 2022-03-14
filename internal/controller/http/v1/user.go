@@ -10,15 +10,25 @@ import (
 )
 
 type userRoutes struct {
-	uCase usecase.User
+	uCase usecase.UseCase
 	log   logger.Interface
 }
 
-func newUserRoutes(handler *mux.Router, u usecase.User, l logger.Interface) {
-	r := &userRoutes{u, l}
+func newUserRoutes(handler *mux.Router, uCase usecase.UseCase, l logger.Interface) {
+	r := &userRoutes{uCase, l}
 
 	handler.HandleFunc("/api/v1/user/{id}/get", r.userGetByID).Methods("GET")
 	handler.HandleFunc("/api/v1/user/add", r.userAdd).Methods("POST")
+	handler.HandleFunc("/api/v1/user/auth", r.userAuth).Methods("POST")
+}
+
+func (u *userRoutes) userAuth(w http.ResponseWriter, r *http.Request) {
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+
+	data, errCode := u.uCase.UserAuth(r.Context(), u.log, username, password)
+	SendResponse(w, data, errCode)
 }
 
 func (u *userRoutes) userGetByID(w http.ResponseWriter, r *http.Request) {
@@ -26,27 +36,13 @@ func (u *userRoutes) userGetByID(w http.ResponseWriter, r *http.Request) {
 	if err1 != nil {
 		eMsg := "error in entity.ConvertStringToUUID()"
 		u.log.Error(eMsg, err1)
-		err := ErrBadRequest
-		SendResponseByErrCode(w, err)
+		errCode := http.StatusBadRequest
+		SendResponse(w, nil, errCode)
 		return
 	}
 
-	data, err := u.uCase.UserGetByID(r.Context(), id)
-	if err != nil {
-		eMsg := "error in u.uCase.UserGetByID()"
-		u.log.Error(eMsg, err)
-		SendResponseByErrCode(w, err)
-		return
-	}
-
-	if data == nil {
-		eMsg := fmt.Sprintf("User with id=<%s> not found", id)
-		u.log.Error(eMsg)
-		SendResponseByErrCode(w, ErrNotFound)
-		return
-	}
-
-	SendResponseOKWithData(w, data)
+	data, errCode := u.uCase.UserGetByID(r.Context(), u.log, id)
+	SendResponse(w, data, errCode)
 }
 
 func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
@@ -56,8 +52,8 @@ func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		eMsg := "error in entity.ConvertStringToUserRole(user_role)"
 		u.log.Error(eMsg, err)
-		err = ErrBadRequest
-		SendResponseByErrCode(w, err)
+		errCode := http.StatusBadRequest
+		SendResponse(w, nil, errCode)
 		return
 	}
 
@@ -70,8 +66,8 @@ func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		eMsg := fmt.Sprintf("FormValue's <%s> is empty", names)
 		u.log.Error(eMsg, err)
-		err = ErrBadRequest
-		SendResponseByErrCode(w, err)
+		errCode := http.StatusBadRequest
+		SendResponse(w, nil, errCode)
 		return
 	}
 
@@ -80,13 +76,6 @@ func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
 	user.Lastname = m["lastname"]
 	user.UserRole = role
 
-	err = u.uCase.UserAdd(r.Context(), user, u.log)
-	if err != nil {
-		eMsg := "error in u.uCase.UserAdd()"
-		u.log.Error(eMsg, err)
-		SendResponseByErrCode(w, err)
-		return
-	}
-
-	SendResponseOKWithData(w, nil)
+	errCode := u.uCase.UserAdd(r.Context(), u.log, user)
+	SendResponse(w, nil, errCode)
 }

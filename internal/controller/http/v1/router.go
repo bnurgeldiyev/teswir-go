@@ -6,10 +6,6 @@ import (
 	"teswir-go/pkg/logger"
 )
 
-func NewUserRouter(handler *mux.Router, l logger.Interface, user usecase.User) {
-	newUserRoutes(handler, user, l)
-}
-
-func NewProductRouter(handler *mux.Router, l logger.Interface, product usecase.Product) {
-	newProductRoutes(handler, product, l)
+func NewRouter(handler *mux.Router, l logger.Interface, uCase usecase.UseCase) {
+	newUserRoutes(handler, uCase, l)
 }
