@@ -13,7 +13,7 @@ const (
 	sqlUserGetByID       = `SELECT username, firstname, lastname, user_role, create_ts, update_ts FROM tbl_user WHERE id=$1`
 )
 
-func (u *Repo) UserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error) {
+func (u *Repo) RepoUserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error) {
 
 	row := u.Pool.QueryRow(ctx, sqlUserGetByID, id)
 	var user entity.User
@@ -39,7 +39,7 @@ func (u *Repo) UserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User
 	return
 }
 
-func (u *Repo) UserGetByUsername(ctx context.Context, username string) (item *entity.User, err error) {
+func (u *Repo) RepoUserGetByUsername(ctx context.Context, username string) (item *entity.User, err error) {
 
 	row := u.Pool.QueryRow(ctx, sqlUserGetByUsername, username)
 	var user entity.User
@@ -65,7 +65,7 @@ func (u *Repo) UserGetByUsername(ctx context.Context, username string) (item *en
 	return
 }
 
-func (u *Repo) UserAdd(ctx context.Context, r *entity.User) (err error) {
+func (u *Repo) RepoUserAdd(ctx context.Context, r *entity.User) (err error) {
 
 	_, err = u.Pool.Exec(ctx, sqlUserAdd, r.Username, r.Firstname, r.Lastname, r.UserRole)
 	return

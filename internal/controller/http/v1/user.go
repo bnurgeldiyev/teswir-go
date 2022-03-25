@@ -27,6 +27,22 @@ func (u *userRoutes) userAuth(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
+	if len(username) == 0 {
+		eMsg := "FormValue username is empty"
+		u.log.Error(eMsg)
+		errCode := http.StatusBadRequest
+		SendResponse(w, nil, errCode)
+		return
+	}
+
+	if len(password) == 0 {
+		eMsg := "FormValue password is empty"
+		u.log.Error(eMsg)
+		errCode := http.StatusBadRequest
+		SendResponse(w, nil, errCode)
+		return
+	}
+
 	data, errCode := u.uCase.UserAuth(r.Context(), u.log, username, password)
 	SendResponse(w, data, errCode)
 }
@@ -46,6 +62,26 @@ func (u *userRoutes) userGetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	token, err := getTokenFromHeader(r)
+	if err != nil {
+		eMsg := "error in getTokenFromHeader()"
+		u.log.Error(eMsg, err)
+		errCode := http.StatusUnauthorized
+		SendResponse(w, nil, errCode)
+		return
+	}
+
+	_, eCode := u.uCase.ActionInfo(ctx, u.log, token)
+	if eCode != 0 {
+		eMsg := "error in p.uCase.ActionInfo()"
+		u.log.Error(eMsg)
+		errCode := http.StatusUnauthorized
+		SendResponse(w, nil, errCode)
+		return
+	}
+
 	user := new(entity.User)
 
 	role, err := entity.ConvertStringToUserRole(r.FormValue("user_role"))
@@ -76,6 +112,6 @@ func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
 	user.Lastname = m["lastname"]
 	user.UserRole = role
 
-	errCode := u.uCase.UserAdd(r.Context(), u.log, user)
+	errCode := u.uCase.UserAdd(ctx, u.log, user)
 	SendResponse(w, nil, errCode)
 }

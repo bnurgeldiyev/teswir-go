@@ -8,4 +8,5 @@ import (
 
 func NewRouter(handler *mux.Router, l logger.Interface, uCase usecase.UseCase) {
 	newUserRoutes(handler, uCase, l)
+	newSocketRoutes(handler, uCase, l)
 }

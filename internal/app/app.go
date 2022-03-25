@@ -53,8 +53,8 @@ func Run(cfg *config.Config) {
 	}
 
 	// Shutdown
-	/*err = httpServer.Shutdown()
+	err = httpServer.Shutdown()
 	if err != nil {
 		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
-	}*/
+	}
 }

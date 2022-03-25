@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -22,6 +23,20 @@ type GeneralResponse struct {
 type ResponseErrorCodeAndMessage struct {
 	ErrorCode    int    `json:"error_code"`
 	ErrorMessage string `json:"error_msg,omitempty"`
+}
+
+func getTokenFromHeader(r *http.Request) (token string, err error) {
+
+	token = r.Header.Get("Authorization")
+
+	if len(token) < 10 {
+		err = fmt.Errorf("Invalid access_token")
+		return
+	}
+
+	token = token[7:]
+
+	return
 }
 
 func SendResponse(w http.ResponseWriter, data interface{}, errCode int) {

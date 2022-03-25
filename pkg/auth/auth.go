@@ -59,3 +59,14 @@ func (client *GrpcClient) Auth(ctx context.Context, username, password string) (
 
 	return
 }
+
+func (client *GrpcClient) VerifyToken(ctx context.Context, token string) (item *UserAccessResponse, err error) {
+
+	request := &UserAccessRequest{
+		AccessToken: token,
+	}
+
+	item, err = client.UserAccess(ctx, request)
+
+	return
+}
