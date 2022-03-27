@@ -20,6 +20,12 @@ func newUserRoutes(handler *mux.Router, uCase usecase.UseCase, l logger.Interfac
 	handler.HandleFunc("/api/v1/user/{id}/get", r.userGetByID).Methods("GET")
 	handler.HandleFunc("/api/v1/user/add", r.userAdd).Methods("POST")
 	handler.HandleFunc("/api/v1/user/auth", r.userAuth).Methods("POST")
+	handler.HandleFunc("/api/v1/user/list", r.list).Methods("GET")
+}
+
+func (u *userRoutes) list(w http.ResponseWriter, r *http.Request) {
+	data, errCode := u.uCase.UserList(r.Context(), u.log)
+	SendResponse(w, data, errCode)
 }
 
 func (u *userRoutes) userAuth(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +117,16 @@ func (u *userRoutes) userAdd(w http.ResponseWriter, r *http.Request) {
 	user.Firstname = m["firstname"]
 	user.Lastname = m["lastname"]
 	user.UserRole = role
+	password := r.FormValue("password")
 
-	errCode := u.uCase.UserAdd(ctx, u.log, user)
+	if !entity.IsPasswordValid(password) {
+		eMsg := "invalid passowrd"
+		u.log.Error(eMsg)
+		errCode := http.StatusBadRequest
+		SendResponse(w, nil, errCode)
+		return
+	}
+
+	errCode := u.uCase.UserAdd(ctx, u.log, user, password)
 	SendResponse(w, nil, errCode)
 }

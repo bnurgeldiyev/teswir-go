@@ -70,3 +70,26 @@ func (client *GrpcClient) VerifyToken(ctx context.Context, token string) (item *
 
 	return
 }
+
+func (client *GrpcClient) Create(ctx context.Context, username, password string) (item *UserCreateResponse, err error) {
+
+	request := &UserCreateRequest{
+		Username: username,
+		Password: password,
+	}
+
+	item, err = client.UserCreate(ctx, request)
+
+	return
+}
+
+func (client *GrpcClient) Delete(ctx context.Context, username string) (item *UserDeleteResponse, err error) {
+
+	request := &UserDeleteRequest{
+		Username: username,
+	}
+
+	item, err = client.UserDelete(ctx, request)
+
+	return
+}

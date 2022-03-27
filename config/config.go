@@ -11,11 +11,12 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
-		PG   `yaml:"postgres"`
-		AUTH `yaml:"auth"`
+		App   `yaml:"app"`
+		HTTP  `yaml:"http"`
+		Log   `yaml:"logger"`
+		PG    `yaml:"postgres"`
+		AUTH  `yaml:"auth"`
+		Mongo `yaml:"mongo"`
 	}
 
 	// App -.
@@ -42,6 +43,12 @@ type (
 
 	AUTH struct {
 		URL string `env-required:"true" yaml:"url"`
+	}
+
+	Mongo struct {
+		URL        string `env-required:"true" yaml:"url"`
+		Database   string `env-required:"true" yaml:"database"`
+		Collection string `env-required:"true" yaml:"collection"`
 	}
 )
 

@@ -13,4 +13,9 @@ postgres:
   pool_max: 20
 
 auth:
-  url: "127.0.0.1:8888"
+  url: '127.0.0.1:8888'
+
+mongo:
+  url: 'mongodb://localhost:27017/'
+  database: 'teswir'
+  collection: 'users'

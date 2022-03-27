@@ -2,11 +2,11 @@ package entity
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/gorilla/websocket"
 	"strings"
-	"teswir-go/pkg/logger"
 	"time"
+	"unicode"
 )
 
 type UserRole string
@@ -31,45 +31,46 @@ type User struct {
 	UpdateTS  time.Time `json:"update_ts"`
 }
 
-func NewUserEntity(log logger.Interface, id, username, firstname, lastname, userRole string) (item *User, err error) {
+type MongoUser struct {
+	ID        uuid.UUID       `json:"id"`
+	Username  string          `json:"username"`
+	Firstname string          `json:"firstname"`
+	Lastname  string          `json:"lastname"`
+	UserRole  UserRole        `json:"user_role"`
+	Conn      *websocket.Conn `json:"conn"`
+	CreateTS  time.Time       `json:"create_ts"`
+	UpdateTS  time.Time       `json:"update_ts"`
+}
 
-	m := make(map[string]string)
-	m["id"] = id
-	m["username"] = username
-	m["firstname"] = firstname
-	m["lastname"] = lastname
-	m["userRole"] = userRole
+type MongoApi struct {
+	Api  string      `json:"api"`
+	Data interface{} `json:"data"`
+}
 
-	names, err := VerifyMinLen(m)
-	if err != nil {
-		eMsg := fmt.Sprintf("FormValue's <%s> is empty", names)
-		log.Error(eMsg, err)
-		return
+type MongoDataSendMessage struct {
+	UserID  uuid.UUID `json:"user_id"`
+	Message string    `json:"message"`
+}
+
+func IsPasswordValid(pwd string) bool {
+
+	var (
+		hasMinLen = false
+		hasNumber = false
+	)
+
+	if len(pwd) > 5 {
+		hasMinLen = true
 	}
 
-	realID, err := ConvertStringToUUID(id)
-	if err != nil {
-		eMsg := "error in convertStringToUUID(id)"
-		log.Error(eMsg, err)
-		return
+	for _, char := range pwd {
+		switch {
+		case unicode.IsNumber(char):
+			hasNumber = true
+		}
 	}
 
-	role, err := ConvertStringToUserRole(userRole)
-	if err != nil {
-		eMsg := "error in convertStringToUserRole"
-		log.Error(eMsg, err)
-		return
-	}
-
-	item = &User{
-		ID:        realID,
-		Username:  username,
-		Firstname: firstname,
-		Lastname:  lastname,
-		UserRole:  role,
-	}
-
-	return
+	return hasMinLen && hasNumber
 }
 
 func ConvertStringToUUID(str string) (id uuid.UUID, err error) {

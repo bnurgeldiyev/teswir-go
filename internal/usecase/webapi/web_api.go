@@ -1,13 +1,18 @@
 package webapi
 
-import "teswir-go/pkg/auth"
+import (
+	"go.mongodb.org/mongo-driver/mongo"
+	"teswir-go/pkg/auth"
+)
 
 type WebAPI struct {
-	auth *auth.GrpcClient
+	auth       *auth.GrpcClient
+	collection *mongo.Collection
 }
 
-func NewWebAPI(auth *auth.GrpcClient) *WebAPI {
+func NewWebAPI(auth *auth.GrpcClient, collection *mongo.Collection) *WebAPI {
 	return &WebAPI{
-		auth: auth,
+		auth:       auth,
+		collection: collection,
 	}
 }

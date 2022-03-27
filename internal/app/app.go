@@ -14,6 +14,7 @@ import (
 	"teswir-go/pkg/auth"
 	"teswir-go/pkg/httpserver"
 	"teswir-go/pkg/logger"
+	"teswir-go/pkg/mongo"
 	"teswir-go/pkg/postgres"
 )
 
@@ -31,9 +32,14 @@ func Run(cfg *config.Config) {
 		l.Fatal(fmt.Errorf("app - Run - auth.NewGrpcClient"))
 	}
 
+	mongoCollection, err1 := mongo.NewMongoConnection(cfg.Mongo.URL, cfg.Mongo.Database, cfg.Mongo.Collection)
+	if err1 != nil {
+		panic(err1)
+	}
+
 	userUseCase := usecase.NewUseCase(
 		repo.NewRepo(pg),
-		webapi.NewWebAPI(authGrpc),
+		webapi.NewWebAPI(authGrpc, mongoCollection),
 	)
 
 	handler := mux.NewRouter()

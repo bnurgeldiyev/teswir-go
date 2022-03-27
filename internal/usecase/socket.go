@@ -15,19 +15,6 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func read(conn *websocket.Conn, quit chan interface{}) {
-	for {
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			quit <- 1
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Println(string(message))
-	}
-}
-
 func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *entity.User, w http.ResponseWriter, r *http.Request) {
 
 	quit := make(chan interface{})
@@ -42,11 +29,31 @@ func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *
 		if err != nil {
 			log.Error("error in conn.Close()")
 		}
+
+		err = u.webAPI.ApiMongoUserDeleteByID(ctx, actionInfo.ID)
+		if err != nil {
+			log.Error("error in u.webAPI.ApiMongoUserDeleteByID")
+		}
 	}()
 
-	fmt.Println("NewConnection:", r.RemoteAddr)
+	fmt.Println("NewConnection:", actionInfo.Username)
 
-	go read(conn, quit)
+	var mongoUser entity.User
+	mongoUser.ID = actionInfo.ID
+	mongoUser.Username = actionInfo.Username
+	mongoUser.Firstname = actionInfo.Firstname
+	mongoUser.Lastname = actionInfo.Lastname
+	mongoUser.UserRole = actionInfo.UserRole
+	mongoUser.CreateTS = actionInfo.CreateTS
+	mongoUser.UpdateTS = actionInfo.UpdateTS
+
+	err = u.webAPI.ApiMongoUserAdd(ctx, mongoUser)
+	if err != nil {
+		fmt.Println("error in apiMongoUserAdd")
+		return
+	}
+
+	go u.webAPI.SocketRead(ctx, actionInfo.ID, conn, quit)
 
 	for {
 		select {

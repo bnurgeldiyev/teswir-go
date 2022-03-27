@@ -47,6 +47,21 @@ func (u *useCase) ActionInfo(ctx context.Context, log logger.Interface, token st
 	return
 }
 
+func (u *useCase) UserList(ctx context.Context, log logger.Interface) (item []*entity.User, errCode int) {
+
+	users, err := u.repo.RepoUserList(ctx)
+	if err != nil {
+		eMsg := "error in u.repo.RepoUserList"
+		log.Error(eMsg, err)
+		errCode = http.StatusInternalServerError
+		return
+	}
+
+	item = users
+
+	return
+}
+
 func (u *useCase) UserAuth(ctx context.Context, log logger.Interface, username, password string) (item *entity.UserAuth, errCode int) {
 
 	auth, err := u.webAPI.ApiAuth(ctx, username, password)
@@ -65,7 +80,7 @@ func (u *useCase) UserAuth(ctx context.Context, log logger.Interface, username, 
 	return
 }
 
-func (u *useCase) UserAdd(ctx context.Context, log logger.Interface, r *entity.User) (errCode int) {
+func (u *useCase) UserAdd(ctx context.Context, log logger.Interface, r *entity.User, password string) (errCode int) {
 
 	user, err1 := u.repo.RepoUserGetByUsername(ctx, r.Username)
 	if err1 != nil {
@@ -82,7 +97,24 @@ func (u *useCase) UserAdd(ctx context.Context, log logger.Interface, r *entity.U
 		return
 	}
 
-	err := u.repo.RepoUserAdd(ctx, r)
+	err := u.webAPI.ApiCreate(ctx, r.Username, password)
+	if err != nil {
+		eMsg := "error in u.webAPI.ApiCreate"
+		log.Error(eMsg, err)
+		errCode = http.StatusInternalServerError
+		return
+	}
+
+	defer func() {
+		if errCode != 0 {
+			err := u.webAPI.ApiDelete(ctx, r.Username)
+			if err != nil {
+				log.Error("Error in u.webAPI.ApiDelete")
+			}
+		}
+	}()
+
+	err = u.repo.RepoUserAdd(ctx, r)
 	if err != nil {
 		eMsg := "error in u.repo.UserAdd()"
 		log.Error(eMsg, err)
