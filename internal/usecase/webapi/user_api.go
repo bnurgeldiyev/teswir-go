@@ -130,7 +130,7 @@ func (w *WebAPI) ApiMongoUserDeleteAll(ctx context.Context) (err error) {
 	return
 }
 
-func (w *WebAPI) SocketRead(ctx context.Context, userID uuid.UUID, conn *websocket.Conn, quit chan interface{}) {
+func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uuid.UUID]*websocket.Conn, quit chan interface{}) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -167,7 +167,30 @@ func (w *WebAPI) SocketRead(ctx context.Context, userID uuid.UUID, conn *websock
 		}
 
 		if api.Api == "send-message" {
+			b, err := json.Marshal(api.Data)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 
+			var sendMessage entity.MongoDataSendMessage
+			err = json.Unmarshal(b, &sendMessage)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			c, ok := m[sendMessage.UserID]
+			if !ok {
+				fmt.Println("User not found")
+				continue
+			}
+
+			err = c.WriteMessage(1, []byte(sendMessage.Message))
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 		}
 	}
 

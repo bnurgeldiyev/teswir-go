@@ -46,7 +46,7 @@ type (
 		ApiCreate(ctx context.Context, username, password string) (err error)
 		ApiDelete(ctx context.Context, username string) (err error)
 
-		SocketRead(ctx context.Context, userID uuid.UUID, conn *websocket.Conn, quit chan interface{})
+		SocketRead(ctx context.Context, conn *websocket.Conn, m map[uuid.UUID]*websocket.Conn, quit chan interface{})
 
 		ApiMongoUserAdd(ctx context.Context, user entity.User) (err error)
 		ApiMongoUserList(ctx context.Context) (item []entity.User, err error)

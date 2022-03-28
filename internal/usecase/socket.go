@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"teswir-go/internal/entity"
@@ -14,6 +15,8 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
+
+var m = make(map[uuid.UUID]*websocket.Conn)
 
 func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *entity.User, w http.ResponseWriter, r *http.Request) {
 
@@ -34,6 +37,8 @@ func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *
 		if err != nil {
 			log.Error("error in u.webAPI.ApiMongoUserDeleteByID")
 		}
+
+		delete(m, actionInfo.ID)
 	}()
 
 	fmt.Println("NewConnection:", actionInfo.Username)
@@ -53,7 +58,9 @@ func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *
 		return
 	}
 
-	go u.webAPI.SocketRead(ctx, actionInfo.ID, conn, quit)
+	m[actionInfo.ID] = conn
+
+	go u.webAPI.SocketRead(ctx, conn, m, quit)
 
 	for {
 		select {
