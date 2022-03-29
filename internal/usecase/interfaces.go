@@ -31,6 +31,7 @@ type (
 		UserList(ctx context.Context, log logger.Interface) (item []*entity.User, errCode int)
 
 		Socket(ctx context.Context, log logger.Interface, actionInfo *entity.User, w http.ResponseWriter, r *http.Request)
+		socketRead(ctx context.Context, log logger.Interface, conn *websocket.Conn, quit chan interface{})
 	}
 
 	Repo interface {
@@ -48,9 +49,9 @@ type (
 
 		SocketRead(ctx context.Context, conn *websocket.Conn, m map[uuid.UUID]*websocket.Conn, quit chan interface{})
 
-		ApiMongoUserAdd(ctx context.Context, user entity.User) (err error)
-		ApiMongoUserList(ctx context.Context) (item []entity.User, err error)
-		ApiMongoUserGetByID(ctx context.Context, id uuid.UUID) (item entity.User, err error)
+		ApiMongoUserAdd(ctx context.Context, user *entity.User) (err error)
+		ApiMongoUserList(ctx context.Context) (item []*entity.User, err error)
+		ApiMongoUserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error)
 		ApiMongoUserDeleteByID(ctx context.Context, id uuid.UUID) (err error)
 		ApiMongoUserDeleteAll(ctx context.Context) (err error)
 	}

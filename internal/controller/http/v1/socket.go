@@ -15,22 +15,13 @@ type socketRoutes struct {
 func newSocketRoutes(handler *mux.Router, uCase usecase.UseCase, l logger.Interface) {
 	r := &socketRoutes{uCase, l}
 
-	handler.HandleFunc("/api/v1/socket", r.socket)
+	handler.HandleFunc("/api/v1/socket/{token}", r.socket)
 }
 
 func (s *socketRoutes) socket(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	token, err := getTokenFromHeader(r)
-	if err != nil {
-		eMsg := "error in getTokenFromHeader()"
-		s.log.Error(eMsg, err)
-		errCode := http.StatusUnauthorized
-		SendResponse(w, nil, errCode)
-		return
-	}
-
-	actionInfo, eCode := s.uCase.ActionInfo(ctx, s.log, token)
+	actionInfo, eCode := s.uCase.ActionInfo(ctx, s.log, mux.Vars(r)["token"])
 	if eCode != 0 {
 		eMsg := "error in p.uCase.ActionInfo()"
 		s.log.Error(eMsg)

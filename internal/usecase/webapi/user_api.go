@@ -7,7 +7,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"teswir-go/internal/entity"
 )
 
@@ -66,14 +65,14 @@ func (w *WebAPI) ApiDelete(ctx context.Context, username string) (err error) {
 	return
 }
 
-func (w *WebAPI) ApiMongoUserAdd(ctx context.Context, user entity.User) (err error) {
+func (w *WebAPI) ApiMongoUserAdd(ctx context.Context, user *entity.User) (err error) {
 
 	_, err = w.collection.InsertOne(ctx, user)
 
 	return
 }
 
-func (w *WebAPI) ApiMongoUserList(ctx context.Context) (item []entity.User, err error) {
+func (w *WebAPI) ApiMongoUserList(ctx context.Context) (item []*entity.User, err error) {
 
 	rows, err1 := w.collection.Find(ctx, bson.D{})
 	if err1 != nil {
@@ -89,7 +88,7 @@ func (w *WebAPI) ApiMongoUserList(ctx context.Context) (item []entity.User, err 
 	}()
 
 	for rows.Next(ctx) {
-		var user entity.User
+		var user *entity.User
 		err := rows.Decode(&user)
 		if err != nil {
 			panic(err)
@@ -101,16 +100,11 @@ func (w *WebAPI) ApiMongoUserList(ctx context.Context) (item []entity.User, err 
 	return
 }
 
-func (w *WebAPI) ApiMongoUserGetByID(ctx context.Context, id uuid.UUID) (item entity.User, err error) {
+func (w *WebAPI) ApiMongoUserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error) {
 
 	filter := bson.D{{"id", id}}
 
 	err = w.collection.FindOne(ctx, filter).Decode(&item)
-	if err == mongo.ErrNoDocuments {
-		err = fmt.Errorf("User not found")
-	} else if err != nil {
-		return
-	}
 
 	return
 }
@@ -193,5 +187,4 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 			}
 		}
 	}
-
 }
