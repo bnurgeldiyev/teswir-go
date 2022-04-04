@@ -140,6 +140,8 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 			continue
 		}
 
+		fmt.Println(string(message))
+
 		if api.Api == "user/list" {
 			users, err := w.ApiMongoUserList(ctx)
 			if err != nil {
@@ -147,9 +149,50 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 				continue
 			}
 
-			b, err1 := json.Marshal(users)
+			var response entity.MongoApi
+			response.Api = "user/list"
+			response.Data = users
+
+			b, err1 := json.Marshal(response)
 			if err1 != nil {
 				fmt.Println(err1)
+				continue
+			}
+
+			err = conn.WriteMessage(1, b)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+		}
+
+		if api.Api == "user/get" {
+			b, err := json.Marshal(api.Data)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			var u entity.User
+			err = json.Unmarshal(b, &u)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			user, err := w.ApiMongoUserGetByID(ctx, u.ID)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			var response entity.MongoApi
+			response.Api = "user/get"
+			response.Data = user
+
+			b, err = json.Marshal(response)
+			if err != nil {
+				fmt.Println(err)
 				continue
 			}
 
@@ -180,7 +223,17 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 				continue
 			}
 
-			err = c.WriteMessage(1, []byte(sendMessage.Message))
+			var response entity.MongoApi
+			response.Api = "send-message"
+			response.Data = sendMessage
+
+			b, err = json.Marshal(response)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			err = c.WriteMessage(1, b)
 			if err != nil {
 				fmt.Println(err)
 				continue
