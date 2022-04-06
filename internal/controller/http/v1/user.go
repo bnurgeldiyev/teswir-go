@@ -24,7 +24,27 @@ func newUserRoutes(handler *mux.Router, uCase usecase.UseCase, l logger.Interfac
 }
 
 func (u *userRoutes) list(w http.ResponseWriter, r *http.Request) {
-	data, errCode := u.uCase.UserList(r.Context(), u.log)
+	ctx := r.Context()
+
+	token, err := getTokenFromHeader(r)
+	if err != nil {
+		eMsg := "error in getTokenFromHeader()"
+		u.log.Error(eMsg, err)
+		errCode := http.StatusUnauthorized
+		SendResponse(w, nil, errCode)
+		return
+	}
+
+	_, eCode := u.uCase.ActionInfo(ctx, u.log, token)
+	if eCode != 0 {
+		eMsg := "error in p.uCase.ActionInfo()"
+		u.log.Error(eMsg)
+		errCode := http.StatusUnauthorized
+		SendResponse(w, nil, errCode)
+		return
+	}
+
+	data, errCode := u.uCase.UserList(ctx, u.log)
 	SendResponse(w, data, errCode)
 }
 
@@ -54,6 +74,26 @@ func (u *userRoutes) userAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *userRoutes) userGetByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	token, err := getTokenFromHeader(r)
+	if err != nil {
+		eMsg := "error in getTokenFromHeader()"
+		u.log.Error(eMsg, err)
+		errCode := http.StatusUnauthorized
+		SendResponse(w, nil, errCode)
+		return
+	}
+
+	_, eCode := u.uCase.ActionInfo(ctx, u.log, token)
+	if eCode != 0 {
+		eMsg := "error in p.uCase.ActionInfo()"
+		u.log.Error(eMsg)
+		errCode := http.StatusUnauthorized
+		SendResponse(w, nil, errCode)
+		return
+	}
+
 	id, err1 := entity.ConvertStringToUUID(mux.Vars(r)["id"])
 	if err1 != nil {
 		eMsg := "error in entity.ConvertStringToUUID()"
@@ -63,7 +103,7 @@ func (u *userRoutes) userGetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, errCode := u.uCase.UserGetByID(r.Context(), u.log, id)
+	data, errCode := u.uCase.UserGetByID(ctx, u.log, id)
 	SendResponse(w, data, errCode)
 }
 

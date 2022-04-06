@@ -105,6 +105,8 @@ func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *
 		}
 
 		delete(m, actionInfo.ID)
+
+		u.webAPI.SocketSendUserList(ctx, log, m)
 	}()
 
 	fmt.Println("NewConnection:", actionInfo.Username)
@@ -130,6 +132,8 @@ func (u *useCase) Socket(ctx context.Context, log logger.Interface, actionInfo *
 		fmt.Println("error in apiMongoUserAdd")
 		return
 	}
+
+	u.webAPI.SocketSendUserList(ctx, log, m)
 
 	m[actionInfo.ID] = conn
 

@@ -47,12 +47,16 @@ type (
 		ApiCreate(ctx context.Context, username, password string) (err error)
 		ApiDelete(ctx context.Context, username string) (err error)
 
-		SocketRead(ctx context.Context, conn *websocket.Conn, m map[uuid.UUID]*websocket.Conn, quit chan interface{})
-
 		ApiMongoUserAdd(ctx context.Context, user *entity.User) (err error)
 		ApiMongoUserList(ctx context.Context) (item []*entity.User, err error)
 		ApiMongoUserGetByID(ctx context.Context, id uuid.UUID) (item *entity.User, err error)
 		ApiMongoUserDeleteByID(ctx context.Context, id uuid.UUID) (err error)
 		ApiMongoUserDeleteAll(ctx context.Context) (err error)
+
+		SocketRead(ctx context.Context, conn *websocket.Conn, m map[uuid.UUID]*websocket.Conn, quit chan interface{})
+		SocketUserList(ctx context.Context, conn *websocket.Conn)
+		SocketSendUserList(ctx context.Context, log logger.Interface, m map[uuid.UUID]*websocket.Conn)
+		SocketUserGet(ctx context.Context, conn *websocket.Conn, userID uuid.UUID)
+		SocketSendMessage(ctx context.Context, receiver *websocket.Conn, sendMessage entity.MongoDataSendMessage)
 	}
 )

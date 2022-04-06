@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"go.mongodb.org/mongo-driver/bson"
 	"teswir-go/internal/entity"
+	"teswir-go/pkg/logger"
 )
 
 func (w *WebAPI) ApiAuth(ctx context.Context, username, password string) (item *entity.UserAuth, err error) {
@@ -143,27 +144,7 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 		fmt.Println(string(message))
 
 		if api.Api == "user/list" {
-			users, err := w.ApiMongoUserList(ctx)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			var response entity.MongoApi
-			response.Api = "user/list"
-			response.Data = users
-
-			b, err1 := json.Marshal(response)
-			if err1 != nil {
-				fmt.Println(err1)
-				continue
-			}
-
-			err = conn.WriteMessage(1, b)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			w.SocketUserList(ctx, conn)
 		}
 
 		if api.Api == "user/get" {
@@ -176,31 +157,12 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 			var u entity.User
 			err = json.Unmarshal(b, &u)
 			if err != nil {
+				fmt.Println("errr")
 				fmt.Println(err)
 				continue
 			}
 
-			user, err := w.ApiMongoUserGetByID(ctx, u.ID)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			var response entity.MongoApi
-			response.Api = "user/get"
-			response.Data = user
-
-			b, err = json.Marshal(response)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-
-			err = conn.WriteMessage(1, b)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			w.SocketUserGet(ctx, conn, u.ID)
 		}
 
 		if api.Api == "send-message" {
@@ -223,21 +185,100 @@ func (w *WebAPI) SocketRead(ctx context.Context, conn *websocket.Conn, m map[uui
 				continue
 			}
 
-			var response entity.MongoApi
-			response.Api = "send-message"
-			response.Data = sendMessage
+			w.SocketSendMessage(ctx, c, sendMessage)
+		}
+	}
+}
 
-			b, err = json.Marshal(response)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
+func (w *WebAPI) SocketUserList(ctx context.Context, conn *websocket.Conn) {
+	users, err := w.ApiMongoUserList(ctx)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-			err = c.WriteMessage(1, b)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
+	var response entity.MongoApi
+	response.Api = "user/list"
+	response.Data = users
+
+	b, err1 := json.Marshal(response)
+	if err1 != nil {
+		fmt.Println(err1)
+	}
+
+	err = conn.WriteMessage(1, b)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func (w *WebAPI) SocketUserGet(ctx context.Context, conn *websocket.Conn, userID uuid.UUID) {
+	user, err := w.ApiMongoUserGetByID(ctx, userID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var response entity.MongoApi
+	response.Api = "user/get"
+	response.Data = user
+
+	b, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = conn.WriteMessage(1, b)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func (w *WebAPI) SocketSendMessage(ctx context.Context, receiver *websocket.Conn, sendMessage entity.MongoDataSendMessage) {
+
+	var response entity.MongoApi
+	response.Api = "send-message"
+	response.Data = sendMessage
+
+	b, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = receiver.WriteMessage(1, b)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func (w *WebAPI) SocketSendUserList(ctx context.Context, log logger.Interface, m map[uuid.UUID]*websocket.Conn) {
+	users, err1 := w.ApiMongoUserList(ctx)
+	if err1 != nil {
+		eMsg := "error in u.webAPI.ApiMongoUserList"
+		log.Error(eMsg, err1)
+		return
+	}
+
+	var response entity.MongoApi
+	response.Api = "user/list"
+	response.Data = users
+
+	b, err1 := json.Marshal(response)
+	if err1 != nil {
+		eMsg := "error in json.Marshal()"
+		log.Error(eMsg, err1)
+		return
+	}
+
+	for _, v := range m {
+		fmt.Println("message")
+		err := v.WriteMessage(1, b)
+		if err != nil {
+			eMsg := "error in v.WriteMessage()"
+			log.Error(eMsg, err)
+			return
 		}
 	}
 }
