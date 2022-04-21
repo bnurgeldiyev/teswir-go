@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
+
+	"github.com/joho/godotenv"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -27,6 +28,7 @@ type (
 
 	// HTTP -.
 	HTTP struct {
+		Host string `env-required:"true" yaml:"host" env:"HTTP_HOST"`
 		Port string `env-required:"true" yaml:"port" env:"HTTP_PORT"`
 	}
 

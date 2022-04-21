@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +15,8 @@ import (
 	"teswir-go/pkg/logger"
 	"teswir-go/pkg/mongo"
 	"teswir-go/pkg/postgres"
+
+	"github.com/gorilla/mux"
 )
 
 func Run(cfg *config.Config) {
@@ -45,7 +46,7 @@ func Run(cfg *config.Config) {
 	handler := mux.NewRouter()
 	v1.NewRouter(handler, l, userUseCase)
 
-	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
+	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Host, cfg.HTTP.Port))
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
